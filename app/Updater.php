@@ -41,7 +41,7 @@ class Updater {
 
         if( false === $remote || ! $this->cache_allowed ) {
 
-            $remote = wp_remote_get( 'https://github.com/DisembarkHost/disembark-connector/blob/master/manifest.json', [
+            $remote = wp_remote_get( 'https://raw.githubusercontent.com/DisembarkHost/disembark-connector/main/manifest.json', [
                     'timeout' => 30,
                     'headers' => [
                         'Accept' => 'application/json'
@@ -52,10 +52,10 @@ class Updater {
             if ( is_wp_error( $remote ) || 200 !== wp_remote_retrieve_response_code( $remote ) || empty( wp_remote_retrieve_body( $remote ) ) ) {
                 return false;
             }
-            
-            $token = Token::get();
-            $remote->sections->description = "{$remote->sections->description}<br /><br /><strong>Your Disembark Connector Token</strong><br /><code>$token</code>";
 
+            $remote = json_decode( wp_remote_retrieve_body( $remote ) );
+            $token  = Token::get();
+            $remote->sections->description = "{$remote->sections->description}<br /><br /><strong>Your Disembark Connector Token</strong><br /><code>$token</code>";
             set_transient( $this->cache_key, $remote, DAY_IN_SECONDS );
             return $remote;
 
