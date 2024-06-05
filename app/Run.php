@@ -9,6 +9,7 @@ class Run {
     private $token         = "";
 
     public function __construct( $token = "" ) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
         if ( defined( 'DISEMBARK_CONNECT_DEV_MODE' ) ) {
             add_filter('https_ssl_verify', '__return_false');
             add_filter('https_local_ssl_verify', '__return_false');
@@ -146,7 +147,7 @@ class Run {
         }
         $directory = empty( $request['directory'] ) ? "" : $request['directory'];
         if ( $directory == "" || is_object( $directory ) ) {
-            $directory = get_home_path();
+            $directory = \get_home_path();
         }
         if ( ! empty( $request['backup_token'] ) ) {
             $this->token = $request['backup_token'];
@@ -158,7 +159,7 @@ class Run {
 
     function list_files( $directory = "" ) {
         if ( empty( $directory ) ) {
-            $directory = get_home_path();
+            $directory = \get_home_path();
         }
         $files         = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $directory ) );
         $response      = [];
