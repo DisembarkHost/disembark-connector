@@ -161,21 +161,25 @@ class Run {
         if ( empty( $directory ) ) {
             $directory = \get_home_path();
         }
-        $files         = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $directory ) );
+        $files         = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
         $response      = [];
 
         foreach ( $files as $file ) {
             $name = $file->getPathname();
-            if ( str_ends_with( $name, "/.." ) || str_ends_with( $name, "/." ) ) {
+            // Skip directories
+            if ( $file->isDir() ){ 
                 continue;
             }
-            if ( $file->isDir() ){ 
+            // Skip symbolic links
+            if ($file->isLink()) {
                 continue;
             }
             $response[] = (object) [ 
                 "name" => $name,
-                "size" => $file->getSize(),
-                "md5"  => md5_file( $name )
+                "size" => $file->getSize()
             ];
         }
 

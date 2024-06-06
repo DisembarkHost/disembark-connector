@@ -267,13 +267,13 @@ class Backup {
 
         do {
             foreach ( $files as $key => $file ) {
-                if (  $manifest_storage + $file->size > $storage_limit ) {
-                    $files = array_slice($files, $key);
-                    break;
-                }
                 $manifest[] = $file;
                 $manifest_storage += $file->size;
                 $file_count++;
+                if (  $manifest_storage + $file->size > $storage_limit ) {
+                    $files = array_slice($files, $key + 1);
+                    break;
+                }
             }
             $response[] = (object) [ 
                 "name"  => "{$this->backup_path}/files-{$manifest_count}.json",
