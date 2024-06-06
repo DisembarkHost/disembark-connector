@@ -21,109 +21,101 @@ class Backup {
         }
     }
 
-    function database( $table ) {
+    public function database_export( $table ) {
         global $wpdb;
+        $max_rows    = "1000";
+        $insert_sql  = "";
+        $rows_start  = 0;        
+        $backup_file = "{$this->backup_path}/{$table}.sql";
 
-        $table_structure  = $wpdb->get_results( "DESCRIBE $table" );
-        $backup_file_name = "{$this->backup_path}/{$table}.sql";
-        $backup_file      = fopen( $backup_file_name, "w") or die("Unable to open file!");
-        if ( ! $table_structure ) {
-            echo "Error getting table details: $table";
+        if ( false === ( $file_handle = fopen( $backup_file, 'a' ) ) ) {
+            echo 'Error: Database file is not creatable/writable. Check your permissions for file `' . htmlspecialchars( $backup_file ) . '` in directory `' . htmlspecialchars( $this->backup_path ) . '`.';
             return false;
         }
-       
-        // Add SQL statement to drop existing table
-        fwrite( $backup_file, "--\n" );
-        fwrite( $backup_file, '-- ' . sprintf( __( 'Delete any existing table %s', 'disembark-connector' ), $this->backquote( $table ) ) . "\n" );
-        fwrite( $backup_file, "--\n" );
-        fwrite( $backup_file, "\n" );
-        fwrite( $backup_file, 'DROP TABLE IF EXISTS ' . $this->backquote( $table ) . ";\n" );
-        fwrite( $backup_file, "\n" );
 
-        // Table structure
-        // Comment in SQL-file
-        fwrite( $backup_file, "--\n" );
-        fwrite( $backup_file, '-- ' . sprintf( __( 'Table structure of table %s', 'disembark-connector' ), $this->backquote( $table ) ) . "\n" );
-        fwrite( $backup_file, "--\n" );
-        fwrite( $backup_file, "\n" );
+        if ( 0 == $rows_start ) {
 
-        $create_table = $wpdb->get_results( "SHOW CREATE TABLE $table", ARRAY_N );
-        if ( false === $create_table ) {
-            $err_msg = sprintf( __( 'Error with SHOW CREATE TABLE for %s.', 'disembark-connector' ), $table );
-            fwrite( $backup_file, "--\n-- $err_msg\n--\n" );
-        }
-        if ( count( $create_table[0] ) == 1 ) {
-            fwrite( $backup_file, $create_table[0][0] );
-        } else {
-            fwrite( $backup_file, $create_table[0][1] . ' ;' );
-        }
-        
-        if ( false === $table_structure ) {
-            $err_msg = sprintf( __( 'Error getting table structure of %s', 'disembark-connector' ), $table );
-            fwrite( $backup_file, "--\n-- $err_msg\n--\n" );
-        }
-
-        // Comment in SQL-file
-        fwrite( $backup_file, "--\n" );
-        fwrite( $backup_file, '-- ' . sprintf( __( 'Data contents of table %s', 'disembark-connector' ), $this->backquote( $table ) ) . "\n" );
-        fwrite( $backup_file, "--\n" );
-    
-        $defs = [];
-        $ints = [];
-        foreach ( $table_structure as $struct ) {
-            if ( ( 0 === strpos( $struct->Type, 'tinyint' ) ) ||
-                ( 0 === strpos( strtolower( $struct->Type ), 'smallint' ) ) ||
-                ( 0 === strpos( strtolower( $struct->Type ), 'mediumint' ) ) ||
-                ( 0 === strpos( strtolower( $struct->Type ), 'int' ) ) ||
-                ( 0 === strpos( strtolower( $struct->Type ), 'bigint' ) ) ) {
-                    $defs[ strtolower( $struct->Field ) ] = ( null === $struct->Default ) ? 'NULL' : $struct->Default;
-                    $ints[ strtolower( $struct->Field ) ] = '1';
+            $create_table = $wpdb->get_results( "SHOW CREATE TABLE `{$table}`", ARRAY_N );
+            if ( false === $create_table ) {
+                echo 'Error: Unable to access and dump database table `' . $table . '`. Table may not exist. Skipping table.';
+                return;
             }
+            // Table creation text.
+            if ( ! isset( $create_table[0] ) ) {
+                echo 'Error: Unable to get table creation SQL for table `' . $table . '`. Result: `' . print_r( $create_table ) . '`. Skipping table.';
+                return false;
+            }
+            $create_table_array = $create_table[0];
+            unset( $create_table );
+            $insert_sql .= str_replace( "\n", '', $create_table_array[1] ) . ";\n"; // Remove internal linebreaks; only put one at end.
+            unset( $create_table_array );
+
+            // Disable keys for this table.
+            $insert_sql .= "/*!40000 ALTER TABLE `{$table}` DISABLE KEYS */;\n";
+
+            // Disable foreign key and unique checks temporarily to help avoid errors.
+            $insert_sql .= "SET FOREIGN_KEY_CHECKS = 0;\n";
+            $insert_sql .= "SET UNIQUE_CHECKS = 0;\n";
         }
 
-        $row_start = 0;
-        $row_inc   = $this->rows_per_segment;
-
-        do {
-
-            if ( ! ini_get( 'safe_mode' ) ) {
-                @set_time_limit( 15 * 60 );
+        $query_count = 0;
+        $rows_remain = true;
+        while ( true === $rows_remain ) {
+            // Row creation text for all rows within this table.
+            $query       = "SELECT * FROM `$table` LIMIT " . $rows_start . ',' . $max_rows;
+            $table_query = $wpdb->get_results( $query, ARRAY_N );
+            $rows_start += $max_rows; // Next loop we will begin at this offset.
+            if ( false === $table_query ) {
+                echo 'Error: Unable to retrieve data from table `' . $table . '`. This table may be corrupt (try repairing the database) or too large to hold in memory (increase mysql and/or PHP memory). Skipping table.';
+                return false;
             }
-            $table_data = $wpdb->get_results( "SELECT * FROM $table LIMIT {$row_start}, {$row_inc}", ARRAY_A );
+            $table_count = count( $table_query );
+            if ( 0 == $table_count || $table_count < $max_rows ) {
+                $rows_remain = false;
+            }
 
-            $entries = 'INSERT INTO ' . $this->backquote( $table ) . ' VALUES (';
-            //    \x08\\x09, not required
-            $search  = [ "\x00", "\x0a", "\x0d", "\x1a" ];
-            $replace = [ '\0', '\n', '\r', '\Z' ];
+            $columns    = $wpdb->get_col_info();
+            $num_fields = count( $columns );
+            foreach ( $table_query as $fetch_row ) {
+                $insert_sql .= "INSERT INTO `$table` VALUES(";
+                for ( $n = 1; $n <= $num_fields; $n++ ) {
+                    $m = $n - 1;
 
-            if ( $table_data ) {
-                foreach ( $table_data as $row ) {
-                    $values = [];
-                    foreach ( $row as $key => $value ) {
-                        if ( ! empty( $ints[ strtolower( $key ) ] ) ) {
-                            // make sure there are no blank spots in the insert syntax,
-                            // yet try to avoid quotation marks around integers
-                            $value    = ( null === $value || '' === $value ) ? $defs[ strtolower( $key ) ] : $value;
-                            $values[] = ( '' === $value ) ? "''" : $value;
-                        } else {
-                            $values[] = "'" . str_replace( $search, $replace, $this->sql_addslashes( $value ) ) . "'";
-                        }
+                    if ( null === $fetch_row[ $m ] ) {
+                        $insert_sql .= 'NULL, ';
+                    } else {
+                        $insert_sql .= "'" . self::db_escape( $fetch_row[ $m ] ) . "', ";
                     }
-                    fwrite( $backup_file, " \n" . $entries . implode( ', ', $values ) . ');' );
                 }
-                $row_start += $row_inc;
+                $insert_sql  = substr( $insert_sql, 0, -2 );
+                $insert_sql .= ");\n";
+
+                $write_return = fwrite( $file_handle, $insert_sql );
+                if ( false === $write_return || 0 == $write_return ) {
+                    echo 'Error: Unable to write to SQL file. Return error/bytes written: `' . $write_return . '`. Skipping table.';
+                    @fclose( $file_handle );
+                    return false;
+                }
+                $insert_sql = '';
             }
-        } while ( ( count( $table_data ) > 0 ) );
+        }
 
-        // Create footer/closing comment in SQL-file
-        fwrite( $backup_file, "\n" );
-        fwrite( $backup_file, "--\n" );
-        fwrite( $backup_file, '-- ' . sprintf( __( 'End of data contents of table %s', 'disembark-connector' ), $this->backquote( $table ) ) . "\n" );
-        fwrite( $backup_file, "-- --------------------------------------------------------\n" );
-        fwrite( $backup_file, "\n" );
-        fclose( $backup_file );
+        // Re-enable keys for this table.
+        $insert_sql  .= "/*!40000 ALTER TABLE `{$table}` ENABLE KEYS */;\n";
+        $insert_sql  .= "SET FOREIGN_KEY_CHECKS = 1;\n";
+        $insert_sql  .= "SET UNIQUE_CHECKS = 1;\n";
+        $write_return = fwrite( $file_handle, $insert_sql );
+        if ( false === $write_return || 0 == $write_return ) {
+            echo 'Error: Unable to write to SQL file. Return error/bytes written: `' . $write_return . '`.';
+            @fclose( $file_handle );
+            return false;
+        }
+        $insert_sql = "";
 
-        return  "{$this->backup_url}\{$table}.sql";
+        @fclose( $file_handle );
+        unset( $file_handle );
+
+        return  "{$this->backup_url}/$table.sql";
     }
 
     function plugins() {
@@ -216,41 +208,6 @@ class Backup {
         return $zip_downloads;
     }
 
-    /**
-	 * Add backquotes to tables and db-names in
-	 * SQL queries. Taken from phpMyAdmin.
-	 */
-	function backquote( $a_name ) {
-		if ( ! empty( $a_name ) && $a_name != '*' ) {
-			if ( is_array( $a_name ) ) {
-				$result = [];
-				reset( $a_name );
-				while ( list($key, $val) = each( $a_name ) ) {
-					$result[ $key ] = '`' . $val . '`';
-				}
-				return $result;
-			} else {
-				return '`' . $a_name . '`';
-			}
-		} else {
-			return $a_name;
-		}
-	}
-
-    /**
-	 * Better addslashes for SQL queries.
-	 * Taken from phpMyAdmin.
-	 */
-	function sql_addslashes( $a_string = '', $is_like = false ) {
-		if ( $is_like ) {
-			$a_string = str_replace( '\\', '\\\\\\\\', $a_string );
-		} else {
-			$a_string = str_replace( '\\', '\\\\', $a_string );
-		}
-
-		return str_replace( '\'', '\\\'', $a_string );
-	}
-
     function everything_else() { 
 
     }
@@ -287,6 +244,11 @@ class Backup {
         } while ( $file_count < $total_files );
         file_put_contents( "{$this->backup_path}/manifest.json", json_encode( $response, JSON_PRETTY_PRINT ) );
     }
+
+    public static function db_escape( $sql ) {
+		global $wpdb;
+		return mysqli_real_escape_string( $wpdb->dbh, $sql );
+	}
 
     function list_manifest() {
         return json_decode( file_get_contents( "{$this->backup_path}/manifest.json" ) );

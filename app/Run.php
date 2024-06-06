@@ -82,7 +82,7 @@ class Run {
             $this->token = $request['backup_token'];
         }
         $table = empty( $request['table'] ) ? "" : $request['table'];
-        return ( new Backup( $this->token ) )->database( $table );
+        return ( new Backup( $this->token ) )->database_export( $table );
     }
 
     function zip_files ( $request ) {
