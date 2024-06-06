@@ -12,7 +12,7 @@ class Backup {
 
     public function __construct( $token = "" ) {
         $bytes             = random_bytes( 20 );
-        $this->token       = empty( $token ) ? substr( bin2hex( $bytes ), 0, -32) : $token;
+        $this->token       = empty( $token ) ? substr( bin2hex( $bytes ), 0, -28) : $token;
         $this->zip         = new \ZipArchive;
         $this->backup_path = wp_upload_dir()["basedir"] . "/disembark/{$this->token}";
         $this->backup_url  = wp_upload_dir()["baseurl"] . "/disembark/{$this->token}";
