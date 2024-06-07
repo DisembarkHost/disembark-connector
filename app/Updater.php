@@ -33,7 +33,8 @@ class Updater {
             $manifest_file = dirname( plugin_dir_path( __FILE__ ) ) . "/manifest.json";
             $remote        = json_decode( file_get_contents( $manifest_file ) );
             $token         = Token::get();
-            $remote->sections->description = "{$remote->sections->description}<br /><br /><strong>Your Disembark Connector Token</strong><br /><code>$token</code>";
+            $home_url      = home_url();
+            $remote->sections->description = "{$remote->sections->description}<br /><br /><strong>Your Disembark Connector Token for $home_url</strong><br /><code>$token</code>";
             return $remote;
         }
 
@@ -53,9 +54,10 @@ class Updater {
                 return false;
             }
 
-            $remote = json_decode( wp_remote_retrieve_body( $remote ) );
-            $token  = Token::get();
-            $remote->sections->description = "{$remote->sections->description}<br /><br /><strong>Your Disembark Connector Token</strong><br /><code>$token</code>";
+            $remote   = json_decode( wp_remote_retrieve_body( $remote ) );
+            $token    = Token::get();
+            $home_url = home_url();
+            $remote->sections->description = "{$remote->sections->description}<br /><br /><strong>Your Disembark Connector Token for $home_url</strong><br /><code>$token</code>";
             set_transient( $this->cache_key, $remote, DAY_IN_SECONDS );
             return $remote;
 
