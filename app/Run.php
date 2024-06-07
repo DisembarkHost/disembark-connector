@@ -72,6 +72,12 @@ class Run {
             ]
         );
 
+        register_rest_route(
+            'disembark/v1', '/cleanup', [
+                'methods'  => 'GET',
+                'callback' => [ $this, 'cleanup' ]
+            ]
+        );
     }
 
     function export_database ( $request ) {
@@ -199,6 +205,40 @@ class Run {
         }
         $files = ( new Backup( $request['backup_token'] ) )->list_downloads();
         echo implode( "\n", $files );
+    }
+
+    function cleanup( $request ) {
+        if ( ! User::allowed( $request ) ) {
+            return new \WP_Error( 'rest_forbidden', 'Sorry, you are not allowed to do that.', [ 'status' => 403 ] );
+        }
+        $directory = wp_upload_dir()["basedir"] . "/disembark/";
+        $files     = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+        $files_to_delete = [];
+
+        foreach ( $files as $file ) {
+            // Skip directories
+            if ( $file->isDir() ){ 
+                continue;
+            }
+            // Skip symbolic links
+            if ($file->isLink()) {
+                continue;
+            }
+            echo "Removing {$file->getPathname()}\n";
+            unlink( $file->getPathname() );
+        }
+        $directories = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach( $directories as $dir ) {
+            if ( $dir->isDir() ){
+                rmdir( $dir->getPathname() );
+            }   
+        }
     }
 
 }
