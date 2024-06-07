@@ -34,7 +34,7 @@ class Updater {
             $remote        = json_decode( file_get_contents( $manifest_file ) );
             $token         = Token::get();
             $home_url      = home_url();
-            $remote->sections->description = "{$remote->sections->description}<br /><br /><strong>Your Disembark Connector Token for $home_url</strong><br /><code>$token</code>";
+            $remote->sections->description = "{$remote->sections->description}<br /><br /><strong>Your Disembark Connector Token for $home_url</strong><br /><code>$token</code><p><a href=\"https://disembark.host/?disembark_site_url=$home_url&disembark_token=$token\" target=\"_blank\">Launch Disembark with your token</a></p>";
             return $remote;
         }
 
@@ -57,7 +57,7 @@ class Updater {
             $remote   = json_decode( wp_remote_retrieve_body( $remote ) );
             $token    = Token::get();
             $home_url = home_url();
-            $remote->sections->description = "{$remote->sections->description}<br /><br /><strong>Your Disembark Connector Token for $home_url</strong><br /><code>$token</code>";
+            $remote->sections->description = "{$remote->sections->description}<br /><br /><strong>Your Disembark Connector Token for $home_url</strong><br /><code>$token</code><p><a href=\"https://disembark.host/?disembark_site_url=$home_url&disembark_token=$token\" target=\"_blank\">Launch Disembark with your token</a></p>";
             set_transient( $this->cache_key, $remote, DAY_IN_SECONDS );
             return $remote;
 
