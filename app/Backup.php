@@ -212,12 +212,18 @@ class Backup {
     }
 
     function list_downloads() {
-        $zip_files     = glob( "{$this->backup_path}/*.zip" );
-        $zip_downloads = [];
-        foreach ( $zip_files as $file ) {
-            $zip_downloads[] = str_replace( $this->backup_path, $this->backup_url, $file );
+        $sql_files = glob( "{$this->backup_path}/*.sql" );
+        $zip_files = glob( "{$this->backup_path}/*.zip" );
+        $files     = [];
+        natsort($sql_files);
+        natsort($zip_files);
+        foreach ( $sql_files as $file ) {
+            $files[] = str_replace( $this->backup_path, $this->backup_url, $file );
         }
-        return $zip_downloads;
+        foreach ( $zip_files as $file ) {
+            $files[] = str_replace( $this->backup_path, $this->backup_url, $file );
+        }
+        return $files;
     }
 
     function everything_else() { 
