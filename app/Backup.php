@@ -130,54 +130,6 @@ class Backup {
         return $backup_url;
     }
 
-    function plugins() {
-        if ( $this->zip->open ( "{$this->backup_path}/plugins-{$this->token}.zip", \ZipArchive::CREATE ) === TRUE) {
-            $directory  = WP_PLUGIN_DIR;
-            $files      = ( new Run )->files( $directory );
-            foreach( $files as $file ) {
-                $this->zip->addFile( "{$directory}/{$file->name}", $file->name );
-            }
-            $this->zip->close();
-        }
-        return "{$this->backup_url}plugins-{$this->token}.zip";
-    }
-
-    function themes() { 
-        if ( $this->zip->open ( "{$this->backup_path}/themes-{$this->token}.zip", \ZipArchive::CREATE ) === TRUE) {
-            $directory  = WP_CONTENT_DIR . "/themes";
-            $files      = ( new Run )->files( $directory );
-            foreach( $files as $file ) {
-                $this->zip->addFile( "{$directory}/{$file->name}", $file->name );
-            }
-            $this->zip->close();
-        }
-        return "{$this->backup_url}themes-{$this->token}.zip";
-    }
-
-    function wordpress() { 
-        if ( $this->zip->open ( "{$this->backup_path}/wordpress-{$this->token}.zip", \ZipArchive::CREATE ) === TRUE ) {
-            $directory  = get_home_path() . "wp-admin";
-            $files      = ( new Run )->files( $directory );
-            foreach( $files as $file ) {
-                $this->zip->addFile( "{$directory}/{$file->name}", "wp-admin/". $file->name );
-            }
-            $directory  = get_home_path() . "wp-includes";
-            $files      = ( new Run )->files( $directory );
-            foreach( $files as $file ) {
-                $this->zip->addFile( "{$directory}/{$file->name}", "wp-includes/". $file->name );
-            }
-            $directory  = get_home_path();
-            $files      = [ "index.php", "license.txt", "readme.html", "wp-activate.php", "wp-app.php", "wp-blog-header.php", "wp-comments-post.php", "wp-config-sample.php", "wp-cron.php", "wp-links-opml.php", "wp-load.php", "wp-login.php", "wp-mail.php", "wp-pass.php", "wp-register.php", "wp-settings.php", "wp-signup.php", "wp-trackback.php", "xmlrpc.php" ];
-            foreach( $files as $file ) {
-                if ( file_exists( "{$directory}/{$file}" ) ) {
-                    $this->zip->addFile( "{$directory}/{$file}", $file );
-                }
-            }
-            $this->zip->close();
-        }
-        return "{$this->backup_url}wordpress-{$this->token}.zip";
-    }
-
     function zip_files( $file_manifest = "" ) {
         if ( empty( $file_manifest ) ) {
             return;
@@ -226,10 +178,6 @@ class Backup {
         return $files;
     }
 
-    function everything_else() { 
-
-    }
-
     function generate_manifest( $files ) {
         $storage_limit    = 104857600;
         $manifest_storage = 0;
@@ -264,9 +212,9 @@ class Backup {
     }
 
     public static function db_escape( $sql ) {
-		global $wpdb;
-		return mysqli_real_escape_string( $wpdb->dbh, $sql );
-	}
+        global $wpdb;
+        return mysqli_real_escape_string( $wpdb->dbh, $sql );
+    }
 
     function list_manifest() {
         return json_decode( file_get_contents( "{$this->backup_path}/manifest.json" ) );
