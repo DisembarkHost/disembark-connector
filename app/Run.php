@@ -207,7 +207,9 @@ class Run {
             return new \WP_Error( 'rest_forbidden', 'Sorry, you are not allowed to do that.', [ 'status' => 403 ] );
         }
         $files = ( new Backup( $request['backup_token'] ) )->list_downloads();
+        header('Content-Type: text/plain');
         echo implode( "\n", $files );
+        exit;
     }
 
     function cleanup( $request ) {
@@ -220,6 +222,8 @@ class Run {
             \RecursiveIteratorIterator::SELF_FIRST
         );
         $files_to_delete = [];
+
+        header('Content-Type: text/plain');
 
         foreach ( $files as $file ) {
             // Skip directories
@@ -242,6 +246,7 @@ class Run {
                 rmdir( $dir->getPathname() );
             }   
         }
+        exit;
     }
 
 }
