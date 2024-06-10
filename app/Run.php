@@ -88,6 +88,9 @@ class Run {
             $this->token = $request['backup_token'];
         }
         $table = empty( $request['table'] ) ? "" : $request['table'];
+        if ( ! empty( $request['parts'] ) ) {
+            return ( new Backup( $this->token ) )->database_export( $table, $request['parts'], $request['rows_per_part'] );
+        }
         return ( new Backup( $this->token ) )->database_export( $table );
     }
 
@@ -142,7 +145,7 @@ class Run {
             return $all_tables;
         }
 
-        $sql      = "SELECT table_name AS \"table\", data_length + index_length AS \"size\" FROM information_schema.TABLES WHERE table_schema = '" . DB_NAME . "' ORDER BY (data_length + index_length) DESC;";
+        $sql      = "SELECT table_name AS \"table\", data_length + index_length AS \"size\", table_rows AS 'row_count' FROM information_schema.TABLES WHERE table_schema = '" . DB_NAME . "' ORDER BY (data_length + index_length) DESC;";
         $response = $wpdb->get_results( $sql );
         return $response;
     }

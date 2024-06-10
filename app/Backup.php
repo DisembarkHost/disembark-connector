@@ -21,12 +21,18 @@ class Backup {
         }
     }
 
-    public function database_export( $table ) {
+    public function database_export( $table, $parts = 0, $rows_per_part = 0 ) {
         global $wpdb;
-        $max_rows    = "1000";
-        $insert_sql  = "";
-        $rows_start  = 0;        
-        $backup_file = "{$this->backup_path}/{$table}.sql";
+        $select_row_limit = 1000;
+        $rows_start       = 0;
+        $insert_sql       = "";
+        $backup_file      = "{$this->backup_path}/{$table}.sql";
+        $backup_url       = "{$this->backup_url}/{$table}.sql";
+        if ( ! empty( $parts ) ) {
+            $backup_file  = "{$this->backup_path}/{$table}-{$parts}.sql";
+            $backup_url   = "{$this->backup_url}/{$table}-{$parts}.sql";
+            $rows_start   = ( $parts - 1 ) * $rows_per_part;
+        }
 
         if ( false === ( $file_handle = fopen( $backup_file, 'a' ) ) ) {
             echo 'Error: Database file is not creatable/writable. Check your permissions for file `' . htmlspecialchars( $backup_file ) . '` in directory `' . htmlspecialchars( $this->backup_path ) . '`.';
@@ -62,15 +68,21 @@ class Backup {
         $rows_remain = true;
         while ( true === $rows_remain ) {
             // Row creation text for all rows within this table.
-            $query       = "SELECT * FROM `$table` LIMIT " . $rows_start . ',' . $max_rows;
+            $query       = "SELECT * FROM `$table` LIMIT " . $rows_start . ',' . $select_row_limit;
             $table_query = $wpdb->get_results( $query, ARRAY_N );
-            $rows_start += $max_rows; // Next loop we will begin at this offset.
+            $rows_start += $select_row_limit; // Next loop we will begin at this offset.
             if ( false === $table_query ) {
                 echo 'Error: Unable to retrieve data from table `' . $table . '`. This table may be corrupt (try repairing the database) or too large to hold in memory (increase mysql and/or PHP memory). Skipping table.';
                 return false;
             }
             $table_count = count( $table_query );
-            if ( 0 == $table_count || $table_count < $max_rows ) {
+            if ( 0 == $table_count || $table_count < $select_row_limit ) {
+                $rows_remain = false;
+            }
+            $query_count += $table_count;
+
+            // End early if we've reached the limit.
+            if ( $rows_per_part > 0 && $query_count >= $rows_per_part ) {
                 $rows_remain = false;
             }
 
@@ -115,7 +127,7 @@ class Backup {
         @fclose( $file_handle );
         unset( $file_handle );
 
-        return  "{$this->backup_url}/$table.sql";
+        return $backup_url;
     }
 
     function plugins() {
