@@ -10,6 +10,15 @@ Connector plugin for [Disembark](https://disembark.host).
 
 ### Changelog
 
+**v1.0.2**
+- New advanced options. Ability to backup only files or database. Ability to include certain database tables or certain files or paths.
+- New instructions for Disembark CLI
+- Analyze site when pasting site URL and token
+- Improve backup progress
+- Split large database tables into smaller exports
+- Fix endpoints `cleanup` and `download` to only respond with plain text
+- Cleanup unused backup code
+
 **v1.0.1**
 - Improved database exports for [Local](https://localwp.com)
 - Cleanup endpoint to purge `uploads/disembark` folder after successful download.
