@@ -67,6 +67,11 @@ class Backup {
         $query_count = 0;
         $rows_remain = true;
         while ( true === $rows_remain ) {
+            // End early and limit select if we've reached the limit.
+            if ( $rows_per_part > 0 && ( $query_count + $select_row_limit ) >= $rows_per_part ) {
+                $select_row_limit = $rows_per_part - $query_count;
+                $rows_remain = false;
+            }
             // Row creation text for all rows within this table.
             $query       = "SELECT * FROM `$table` LIMIT " . $rows_start . ',' . $select_row_limit;
             $table_query = $wpdb->get_results( $query, ARRAY_N );
@@ -80,12 +85,6 @@ class Backup {
                 $rows_remain = false;
             }
             $query_count += $table_count;
-
-            // End early if we've reached the limit.
-            if ( $rows_per_part > 0 && $query_count >= $rows_per_part ) {
-                $rows_remain = false;
-            }
-
             $columns    = $wpdb->get_col_info();
             $num_fields = count( $columns );
             foreach ( $table_query as $fetch_row ) {
