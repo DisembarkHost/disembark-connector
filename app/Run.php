@@ -145,8 +145,11 @@ class Run {
             return $all_tables;
         }
 
-        $sql      = "SELECT table_name AS \"table\", data_length + index_length AS \"size\", table_rows AS 'row_count' FROM information_schema.TABLES WHERE table_schema = '" . DB_NAME . "' ORDER BY (data_length + index_length) DESC;";
+        $sql      = "SELECT table_name AS \"table\", data_length + index_length AS \"size\" FROM information_schema.TABLES WHERE table_schema = '" . DB_NAME . "' ORDER BY (data_length + index_length) DESC;";
         $response = $wpdb->get_results( $sql );
+        foreach( $response as $row ) {
+            $row->row_count = $wpdb->get_var( "SELECT COUNT(*) FROM " . $row->table );
+        }
         return $response;
     }
     
