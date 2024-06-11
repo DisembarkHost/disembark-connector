@@ -10,7 +10,7 @@
     "tested": "6.5.4",
     "requires_php": "5.6",
     "added": "2024-06-05 16:00:00",
-    "last_updated": "2024-06-07 19:00:00",
+    "last_updated": "2024-06-11 15:30:00",
     "homepage": "https://disembark.host",
     "sections": {
     "description": "Connector plugin for <a href=\"https://disembark.host\">Disembark</a>.",
