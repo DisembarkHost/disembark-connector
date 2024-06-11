@@ -147,6 +147,20 @@ class Backup {
         return "{$this->backup_url}/{$file_name}.zip";
     }
 
+    function match_and_zip_files( $file_or_path = "" ) {
+        $files     = ( new Run )->list_files( "", [ $file_or_path ] );
+        $file_name = sanitize_title( $file_or_path );
+        $zip_name  = "{$this->backup_path}/files-{$file_name}.zip";
+        $directory = get_home_path();
+        if ( $this->zip->open ( $zip_name, \ZipArchive::CREATE ) === TRUE) {
+            foreach( $files as $file ) {
+                $this->zip->addFile( "{$directory}/{$file->name}", $file->name );
+            }
+            $this->zip->close();
+        }
+        return "{$this->backup_url}/files-{$file_name}.zip";
+    }
+
     function zip_database() {
         $database_files = glob( "{$this->backup_path}/*.sql" );
         $zip_name       = "{$this->backup_path}/database.zip";

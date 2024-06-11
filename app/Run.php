@@ -101,7 +101,11 @@ class Run {
         if ( ! empty( $request['backup_token'] ) ) {
             $this->token = $request['backup_token'];
         }
-        $file = empty( $request['file'] ) ? "" : $request['file'];
+        $file         = empty( $request['file'] ) ? "" : $request['file'];
+        $include_file = empty( $request['include_file'] ) ? "" : $request['include_file'];
+        if ( ! empty( $include_file ) ) {
+            return ( new Backup( $this->token ) )->match_and_zip_files( $include_file );
+        }
         return ( new Backup( $this->token ) )->zip_files( $file );
     }
 
@@ -169,15 +173,16 @@ class Run {
         return $manifest_files;
     }
 
-    function list_files( $directory = "" ) {
+    function list_files( $directory = "", $include_files = [] ) {
         if ( empty( $directory ) ) {
             $directory = \get_home_path();
         }
-        $files         = new \RecursiveIteratorIterator(
+        $files    = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::SELF_FIRST
         );
-        $response      = [];
+        $response = [];
+        $seen     = [];
 
         foreach ( $files as $file ) {
             $name = $file->getPathname();
@@ -189,6 +194,27 @@ class Run {
             if ($file->isLink()) {
                 continue;
             }
+            // Normalize the file path
+            $relativePath = str_replace( $directory, "", $name );
+            $relativePath = ltrim( $relativePath, '/' );
+            // Check for duplicates
+            if (in_array($relativePath, $seen)) {
+                continue;
+            }
+            if ( ! empty( $include_files ) ) {
+                foreach( $include_files as $include ) {
+                    if ( str_contains( $relativePath, $include ) ) {
+                        $seen[]     = $relativePath;
+                        $response[] = (object) [ 
+                            "name" => $name,
+                            "size" => $file->getSize()
+                        ];
+                        break;
+                    }
+                }
+                continue;
+            }
+            $seen[]     = $relativePath;
             $response[] = (object) [ 
                 "name" => $name,
                 "size" => $file->getSize()
@@ -198,6 +224,10 @@ class Run {
         foreach ( $response as $file ) {
             $file->name = str_replace( $directory, "", $file->name );
             $file->name = ltrim( $file->name, '/' );
+        }
+
+        if ( ! empty( $include_files ) ) {
+            return $response;
         }
 
         ( new Backup( $this->token ) )->generate_manifest( $response );
