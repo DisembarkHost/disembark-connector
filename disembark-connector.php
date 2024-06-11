@@ -26,10 +26,3 @@ if ( ! defined( 'WPINC' ) ) {
 require plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
 new DisembarkConnector\Run();
 new DisembarkConnector\Updater();
-
-// PHP 7 support
-if (!function_exists('str_ends_with')) {
-	function str_ends_with($str, $end) {
-		return (@substr_compare($str, $end, -strlen($end))==0);
-	}
-}
