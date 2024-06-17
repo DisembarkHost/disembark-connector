@@ -201,6 +201,10 @@ class Run {
             if (in_array($relativePath, $seen)) {
                 continue;
             }
+            // Exclude Disembark directory
+            if ( str_contains( $relativePath, "uploads/disembark" ) ) {
+                continue;
+            }
             if ( ! empty( $include_files ) ) {
                 foreach( $include_files as $include ) {
                     if ( str_contains( $relativePath, $include ) ) {
