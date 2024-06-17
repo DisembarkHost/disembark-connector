@@ -160,7 +160,17 @@ class Backup {
         return "{$this->backup_url}/files-{$file_name}.zip";
     }
 
-    function zip_database() {
+    function zip_database( $table = "" ) {
+        if ( ! empty( $table ) ) {
+            $zip_name = "{$this->backup_path}/database-{$table}.zip";
+            $file     = "{$this->backup_path}/{$table}.sql";
+            if ( $this->zip->open ( $zip_name, \ZipArchive::CREATE ) === TRUE) {
+                $this->zip->addFile( $file, basename( $file ) );
+                $this->zip->close();
+            }
+            unlink( $file );
+            return "{$this->backup_url}/database-{$table}.zip";
+        }
         $database_files = glob( "{$this->backup_path}/*.sql" );
         $zip_name       = "{$this->backup_path}/database.zip";
         if ( $this->zip->open ( $zip_name, \ZipArchive::CREATE ) === TRUE) {
@@ -206,7 +216,7 @@ class Backup {
                 $manifest[] = $file;
                 $manifest_storage += $file->size;
                 $file_count++;
-                if (  $manifest_storage + $file->size > $storage_limit ) {
+                if ( $manifest_storage + $file->size > $storage_limit ) {
                     $files = array_slice($files, $key + 1);
                     break;
                 }
