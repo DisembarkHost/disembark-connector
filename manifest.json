@@ -13,9 +13,7 @@
     "last_updated": "2024-06-11 15:30:00",
     "homepage": "https://disembark.host",
     "sections": {
-    "description": "Connector plugin for <a href=\"https://disembark.host\">Disembark</a>.",
-    "installation": "Click the activate button and that\"s it.",
-    "changelog": ""
+        "description": "Connector plugin for <a href=\"https://disembark.host\">Disembark</a>."
     },
     "banners": {
         "low": "https://disembark.host/images/disembark-772x250.webp",

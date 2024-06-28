@@ -103,9 +103,7 @@ class Updater {
         $response->last_updated   = $remote->last_updated;
 
         $response->sections = [
-            'description'  => $remote->sections->description,
-            'installation' => $remote->sections->installation,
-            'changelog'    => $remote->sections->changelog
+            'description'  => $remote->sections->description
         ];
 
         if ( ! empty( $remote->banners ) ) {
