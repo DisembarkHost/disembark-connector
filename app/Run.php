@@ -201,8 +201,8 @@ class Run {
             if (in_array($relativePath, $seen)) {
                 continue;
             }
-            // Exclude Disembark directory
-            if ( str_contains( $relativePath, "uploads/disembark" ) ) {
+            // Exclude directories
+            if ( str_contains( $relativePath, "uploads/disembark" ) || str_contains( $relativePath, "wp-content/updraft" ) || str_contains( $relativePath, "wp-content/ai1wm-backups" ) ) {
                 continue;
             }
             if ( ! empty( $include_files ) ) {
