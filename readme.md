@@ -10,7 +10,7 @@ Connector plugin for [Disembark](https://disembark.host).
 
 ### Changelog
 
-**v1.0.4** - January 27th 2025
+**v1.0.4** - January 17th 2025
 - WordPress version bump
 - If updater check fails use local plugin manifest
 
