@@ -29,13 +29,14 @@ class Updater {
 
     public function request(){
 
+        $manifest_file = dirname( plugin_dir_path( __FILE__ ) ) . "/manifest.json";
+        $local         = json_decode( file_get_contents( $manifest_file ) );
+        $token         = Token::get();
+        $home_url      = home_url();
+        $local->sections->description = "{$local->sections->description}<br /><br />Your Disembark Connector Token for $home_url<br /><code>$token</code><ul><li><strong><a href=\"https://disembark.host/?disembark_site_url=$home_url&disembark_token=$token\" target=\"_blank\">Launch Disembark with your token</a></strong></li></ul><p>Or over command line with <a href=\"https://github.com/DisembarkHost/disembark-cli\">Disembark CLI</a></p><p><ul><li><code>disembark connect $home_url $token</code></li><li><code>disembark backup $home_url</code></li></ul></p>";
+
         if ( defined( 'DISEMBARK_CONNECT_DEV_MODE' ) ) {
-            $manifest_file = dirname( plugin_dir_path( __FILE__ ) ) . "/manifest.json";
-            $remote        = json_decode( file_get_contents( $manifest_file ) );
-            $token         = Token::get();
-            $home_url      = home_url();
-            $remote->sections->description = "{$remote->sections->description}<br /><br />Your Disembark Connector Token for $home_url<br /><code>$token</code><ul><li><strong><a href=\"https://disembark.host/?disembark_site_url=$home_url&disembark_token=$token\" target=\"_blank\">Launch Disembark with your token</a></strong></li></ul><p>Or over command line with <a href=\"https://github.com/DisembarkHost/disembark-cli\">Disembark CLI</a></p><p><ul><li><code>disembark connect $home_url $token</code></li><li><code>disembark backup $home_url</code></li></ul></p>";
-            return $remote;
+            return $local;
         }
 
         $remote = get_transient( $this->cache_key );
@@ -51,7 +52,7 @@ class Updater {
             );
 
             if ( is_wp_error( $remote ) || 200 !== wp_remote_retrieve_response_code( $remote ) || empty( wp_remote_retrieve_body( $remote ) ) ) {
-                return false;
+                return $local;
             }
 
             $remote   = json_decode( wp_remote_retrieve_body( $remote ) );
