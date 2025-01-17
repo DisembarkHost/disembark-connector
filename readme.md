@@ -10,6 +10,10 @@ Connector plugin for [Disembark](https://disembark.host).
 
 ### Changelog
 
+**v1.0.4** - January 27th 2025
+- WordPress version bump
+- If updater check fails use local plugin manifest
+
 **v1.0.3** - June 27th 2024
 - Exclude Disembark directory and others from backup zip
 - Zip large database tables individually
