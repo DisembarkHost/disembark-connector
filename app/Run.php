@@ -19,6 +19,13 @@ class Run {
         $this->plugin_url  = dirname( plugin_dir_url( __FILE__ ) );
         $this->plugin_path = dirname( plugin_dir_path( __FILE__ ) );
         add_action( 'rest_api_init', [ $this, 'disembark_register_rest_endpoints' ] );
+        if ( defined( 'WP_CLI' ) && \WP_CLI ) {
+            \WP_CLI::add_command( 'disembark', new class {}, [
+                'shortdesc' => 'Disembarks helper commands.',
+            ] );
+            \WP_CLI::add_command( 'disembark token', [ 'DisembarkConnector\Command', "token" ]  );
+            \WP_CLI::add_command( 'disembark cli-info', [ 'DisembarkConnector\Command', 'cli_info' ] );
+            \WP_CLI::add_command( 'disembark backup-url', [ 'DisembarkConnector\Command', 'backup_url' ] );
     }
 
     function disembark_register_rest_endpoints() {

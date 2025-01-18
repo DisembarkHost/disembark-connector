@@ -23,6 +23,7 @@ class ComposerStaticInit3cb02a6db3f01373a68427c4334a1ac0
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'DisembarkConnector\\Backup' => __DIR__ . '/../..' . '/app/Backup.php',
+        'DisembarkConnector\\Command' => __DIR__ . '/../..' . '/app/Command.php',
         'DisembarkConnector\\Run' => __DIR__ . '/../..' . '/app/Run.php',
         'DisembarkConnector\\Token' => __DIR__ . '/../..' . '/app/Token.php',
         'DisembarkConnector\\Updater' => __DIR__ . '/../..' . '/app/Updater.php',
