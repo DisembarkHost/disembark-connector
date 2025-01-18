@@ -26,7 +26,7 @@ class Run {
             \WP_CLI::add_command( 'disembark token', [ 'DisembarkConnector\Command', "token" ]  );
             \WP_CLI::add_command( 'disembark cli-info', [ 'DisembarkConnector\Command', 'cli_info' ] );
             \WP_CLI::add_command( 'disembark backup-url', [ 'DisembarkConnector\Command', 'backup_url' ] );
-    }
+        }
     }
 
     function disembark_register_rest_endpoints() {
