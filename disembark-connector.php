@@ -9,7 +9,7 @@
  * Plugin Name:       Disembark Connector
  * Plugin URI:        https://disembark.host
  * Description:       Connector plugin for Disembark
- * Version:           1.0.4
+ * Version:           1.0.5
  * Author:            Austin Ginder
  * Author URI:        https://austinginder.com
  * License:           MIT
