@@ -21,7 +21,7 @@ class Updater {
         $this->cache_key     = 'disembark_connect_updater';
         $this->cache_allowed = false;
 
-        add_filter( 'plugins_api', [ $this, 'info' ], 20, 3 );
+        add_filter( 'plugins_api', [ $this, 'info' ], 30, 3 );
         add_filter( 'site_transient_update_plugins', [ $this, 'update' ] );
         add_action( 'upgrader_process_complete', [ $this, 'purge' ], 10, 2 );
 
