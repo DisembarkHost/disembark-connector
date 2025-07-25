@@ -30,7 +30,6 @@ class Run {
     }
 
     function disembark_register_rest_endpoints() {
-
         register_rest_route(
             'disembark/v1', '/database', [
                 'methods'  => 'GET',
@@ -88,7 +87,7 @@ class Run {
         );
     }
 
-    function export_database ( $request ) {
+    function export_database( $request ) {
         if ( ! User::allowed( $request ) ) {
             return new \WP_Error( 'rest_forbidden', 'Sorry, you are not allowed to do that.', [ 'status' => 403 ] );
         }
@@ -102,7 +101,7 @@ class Run {
         return ( new Backup( $this->token ) )->database_export( $table );
     }
 
-    function zip_files ( $request ) {
+    function zip_files( $request ) {
         if ( ! User::allowed( $request ) ) {
             return new \WP_Error( 'rest_forbidden', 'Sorry, you are not allowed to do that.', [ 'status' => 403 ] );
         }
@@ -117,7 +116,7 @@ class Run {
         return ( new Backup( $this->token ) )->zip_files( $file );
     }
 
-    function zip_database ( $request ) {
+    function zip_database( $request ) {
         if ( ! User::allowed( $request ) ) {
             return new \WP_Error( 'rest_forbidden', 'Sorry, you are not allowed to do that.', [ 'status' => 403 ] );
         }
@@ -127,7 +126,7 @@ class Run {
         return ( new Backup( $this->token ) )->zip_database();
     }
 
-    function backup ( $request ) {
+    function backup( $request ) {
         if ( ! User::allowed( $request ) ) {
             return new \WP_Error( 'rest_forbidden', 'Sorry, you are not allowed to do that.', [ 'status' => 403 ] );
         }
@@ -209,8 +208,7 @@ class Run {
             if (in_array($relativePath, $seen)) {
                 continue;
             }
-            // Exclude directories
-            if ( str_contains( $relativePath, "uploads/disembark" ) || str_contains( $relativePath, "wp-content/updraft" ) || str_contains( $relativePath, "wp-content/ai1wm-backups" ) || $relativePath === 'wp-content/mysql.sql' ) {
+            if ( $this->is_exclude_directory( $relativePath ) ) {
                 continue;
             }
             if ( ! empty( $include_files ) ) {
@@ -294,4 +292,23 @@ class Run {
         exit;
     }
 
+    protected function is_exclude_directory( $relativePath ) {
+        $exclude_directories = array(
+            'uploads/disembark',
+            'wp-content/updraft',
+            'wp-content/ai1wm-backups',
+            'wp-content/mysql.sql',
+        );
+        return $this->str_contains_any( $relativePath, $exclude_directories );
+    }
+
+    protected function str_contains_any( $haystack, $needles ) {
+        foreach ( $needles as $needle ) {
+            if ( $needle !== '' && str_contains( $haystack, $needle ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
